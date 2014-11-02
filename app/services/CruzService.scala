@@ -1,18 +1,16 @@
 package services
 
 import play.api.libs.json.JsValue
-import play.api.libs.ws.WS
-import play.api.Play.current
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import services.impl.WsCruzService
 
 import scala.concurrent.Future
 
-object CruzService {
-  val annualReportsUrl = "http://www.registeruz.sk/cruz-public/api/vyrocne-spravy?zmenene-od=2000-01-01&pokracovat-za-id=1&max-zaznamov=10"
+trait CruzService {
+  def getSubject(id: Int): Future[JsValue]
+  def getFinancialStatement(id: Int): Future[JsValue]
+  def getAccountingStatement(id: Int): Future[JsValue]
+}
 
-  def getAnnualReports(): Future[JsValue] = {
-    WS.url(annualReportsUrl).get().map { response =>
-      response.json
-    }
-  }
+object CruzService {
+  def apply(): CruzService = WsCruzService
 }
