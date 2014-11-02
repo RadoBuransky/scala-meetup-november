@@ -14,7 +14,9 @@ private[services] class CruzFinService(cruzService: CruzService) extends FinServ
         accountingStatementId <- (subject \ "idUctovnychZavierok").as[JsArray].value
       } yield cruzService.getAccountingStatement(accountingStatementId.as[Int])
 
+      // Seq[Future[_]] -> Future[Seq[_]]
       Future.sequence(accountingStatementFutures).map { accountingStatements =>
+        // Update JSON
         subject.transform((__ \ "idUctovnychZavierok").json.update(
           __.read[JsArray].map(_ => JsArray(accountingStatements.filter(_ != JsNull)))
         )).get

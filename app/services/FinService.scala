@@ -1,7 +1,8 @@
 package services
 
 import play.api.libs.json.JsValue
-import services.impl.CruzFinService
+import repositories.FinRepository
+import services.impl.{CachedFinService, CruzFinService}
 
 import scala.concurrent.Future
 
@@ -10,5 +11,8 @@ trait FinService {
 }
 
 object FinService {
-  def apply(): FinService = new CruzFinService(CruzService())
+  def apply(): FinService = cachedFinService
+
+  private lazy val finService = new CruzFinService(CruzService())
+  private lazy val cachedFinService = new CachedFinService(finService, FinRepository())
 }
