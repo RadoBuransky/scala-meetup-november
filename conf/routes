@@ -4,6 +4,9 @@
 
 # Home page
 GET     /                           controllers.Application.index
+GET     /coffee                     controllers.Application.getMakeCoffee
+POST    /coffee                     controllers.Application.postMakeCoffee
+GET     /coffee/:id                 controllers.Application.coffee(id)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
