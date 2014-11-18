@@ -7,12 +7,12 @@ import model.CoffeeStrength
 import model.JsonFormats._
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.{Writes, JsObject, Json}
+import play.api.libs.json.{Json, Writes}
 import play.api.mvc._
 import repositories.CoffeeRepository
 import services.CoffeeService
 
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 case class ErrorResult()
 

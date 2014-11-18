@@ -10,7 +10,12 @@ import services.CoffeeService
 private[services] class CoffeeServiceImpl(coffeeSystem: CoffeeSystem,
                                           repository: CoffeeRepository) extends CoffeeService {
   override def make(strength: CoffeeStrength) = {
-    val coffee = Coffee(UUID.randomUUID(), strength, coffeeSystem.now)
+    val timeIsNow = coffeeSystem.now
+
+    if (timeIsNow.isAfter(timeIsNow.withTime(22, 0, 0, 0)))
+      throw new IllegalStateException("You cannot drink coffee after 10 PM!")
+
+    val coffee = Coffee(UUID.randomUUID(), strength, timeIsNow)
     repository.save(coffee).flatMap(_ => top())
   }
 
