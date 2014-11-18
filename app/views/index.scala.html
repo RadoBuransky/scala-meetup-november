@@ -1,7 +1,6 @@
-@(message: String)
-
-@main("Welcome to Play") {
-
-    @play20.welcome(message)
-
+@main("Make a coffee") {
+<form method="post" action="@routes.Application.postCoffee()">
+    <input type="text" name="strength" />
+    <input type="submit" value="Coffee!" />
+</form>
 }

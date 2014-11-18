@@ -2,11 +2,14 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
+# UI
 GET     /                           controllers.Application.index
-GET     /coffee                     controllers.Application.getMakeCoffee
-POST    /coffee                     controllers.Application.postMakeCoffee
-GET     /coffee/:id                 controllers.Application.coffee(id)
+
+# JSON REST API
+POST    /api/coffee                 controllers.Application.postCoffee
+GET     /api/coffee/:id             controllers.Application.coffee(id)
+GET     /api/coffees                controllers.Application.all
+GET     /api/coffees/top            controllers.Application.top
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

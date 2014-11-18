@@ -1,14 +1,20 @@
 package controllers
 
+import java.util.UUID
+
 import common.CoffeeSystem
+import model.CoffeeStrength
+import model.JsonFormats._
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.Json
+import play.api.libs.json.{Writes, JsObject, Json}
 import play.api.mvc._
 import repositories.CoffeeRepository
-import services.{CoffeeStrength, CoffeeService}
+import services.CoffeeService
 
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
+
+case class ErrorResult()
 
 object Application extends Controller {
   private val coffeeSystem = CoffeeSystem
@@ -17,33 +23,48 @@ object Application extends Controller {
 
   private val makeCoffeeForm = Form { single("strength" -> number) }
 
-  def index = Action { Redirect(routes.Application.getMakeCoffee()) }
-  def getMakeCoffee() = Action { Ok(views.html.make()) }
+  def index = Action { Ok(views.html.index()) }
 
-  def postMakeCoffee() = Action { implicit request =>
-    // Get strength value from HTTP form
+  def postCoffee() = Action { implicit request =>
     makeCoffeeForm.bindFromRequest.value match {
-      // Is there some strength and is it a positive number?
       case Some(strength) if strength > 0 => {
-        // Call service
-        coffeeService.makeCoffee(CoffeeStrength(strength)) match {
-          // Service worked
-          case Success(dailyStats) => Ok(Json.obj("avgCoffeeStrength" -> strength))
-
-          // Service failed
-          case Failure(t) => InternalServerError(t.toString + t.getStackTrace.mkString("\n","\n",""))
+        withSuccess(coffeeService.make(CoffeeStrength(strength))) { coffees =>
+          Ok(Json.obj("coffees" -> coffees))
         }
       }
 
-      // Strength is invalid
       case Some(strength) => BadRequest("strength must be greater than zero!")
-
-      // Strength is not there at all
       case _ => BadRequest("strength required!")
     }
   }
 
   def coffee(id: String) = Action {
-    Ok
+    Try(UUID.fromString(id)) match {
+      case Success(uuid) =>
+        withSuccess(coffeeService.get(uuid)) {
+          case Some(coffee) => Ok(Json.toJson(coffee))
+          case None => NotFound
+        }
+      case Failure(t) => BadRequest(s"id is not an UUID $id")
+    }
   }
+
+  def all() = Action { okJson(coffeeService.all()) }
+  def top() = Action { okJson(coffeeService.top()) }
+
+  private def okJson[T](value: Try[T])(implicit writes: Writes[T]): Result = {
+    withSuccess(value) { result =>
+      Ok(Json.toJson(result))
+    }
+  }
+
+  private def withSuccess[T](value: Try[T])(action: T => Result): Result = {
+    value match {
+      case Success(s) => action(s)
+      case Failure(t) => internalServerError(t)
+    }
+  }
+
+  private def internalServerError(t: Throwable) =
+    InternalServerError(t.toString + t.getStackTrace.mkString("\n","\n",""))
 }

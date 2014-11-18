@@ -1,35 +1,40 @@
 package repositories.mongo
 
+import java.util.UUID
+
 import common.Logging
-import org.joda.time.DateTime
-import reactivemongo.bson.{BSONDateTime, BSONObjectID, BSONDocument}
-import repositories.CoffeeRepository
+import model.Coffee
+import model.JsonFormats._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json.Json
+import repositories.CoffeeRepository
 
 import scala.concurrent.Await
-import scala.util.Try
 import scala.concurrent.duration._
+import scala.util.Try
 
 private[repositories] class MongoCoffeeRepository extends BaseMongoRepository(MongoCoffeeRepository.dbName)
   with CoffeeRepository with Logging {
-  override def saveCoffee(strength: Int, timestamp: DateTime): Try[String] =
-    withCollection(MongoCoffeeRepository.coffeeColl) { coll =>
-      val id = BSONObjectID.generate
 
-      val futureInsert = coll.insert(BSONDocument("_id" -> id,
-        "strength" -> strength,
-        "timestamp" -> BSONDateTime(timestamp.getMillis)))
+  override def save(coffee: Coffee): Try[Unit] =
+    withCollection(MongoCoffeeRepository.coffeeColl) { coll =>
+      val futureInsert = coll.insert(coffee)
+      log.error("xxx")
 
       futureInsert.onFailure {
-        case t => log.error(s"save coffee failed! [$id, $strength, $timestamp]", t)
+        case t => log.error(s"save coffee failed! [$coffee]", t)
       }
 
       Await.result(futureInsert, 10 seconds)
-
-      id.stringify
     }
 
-  //  db.coffee.aggregate({ $group: { _id: { $dayOfYear: "$timestamp" }, avgStrength: { $avg: "$strength" } } })
+  override def all(): Try[Seq[Coffee]] = withCollection(MongoCoffeeRepository.coffeeColl) { coll =>
+    Await.result(coll.find(Json.obj()).cursor[Coffee].collect[Seq](), 10 seconds)
+  }
+
+  override def get(id: UUID): Try[Option[Coffee]] = withCollection(MongoCoffeeRepository.coffeeColl) { coll =>
+    Await.result(coll.find(Json.obj()).cursor[Coffee].headOption, 10 seconds)
+  }
 }
 
 private object MongoCoffeeRepository {

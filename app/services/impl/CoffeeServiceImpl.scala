@@ -1,23 +1,20 @@
 package services.impl
 
-import common.CoffeeSystem
-import repositories.CoffeeRepository
-import services.{DailyStats, CoffeeStrength, CoffeeService}
+import java.util.UUID
 
-import scala.util.{Success, Try}
+import common.CoffeeSystem
+import model.{Coffee, CoffeeStrength}
+import repositories.CoffeeRepository
+import services.CoffeeService
 
 private[services] class CoffeeServiceImpl(coffeeSystem: CoffeeSystem,
-                                          coffeeRepository: CoffeeRepository) extends CoffeeService {
-  override def makeCoffee(coffeeStrength: CoffeeStrength): Try[DailyStats] = {
-    Try {
-      // Get current time
-      val timeIsNow = coffeeSystem.now
-
-      // Save coffee to DB
-      val coffeeId = coffeeRepository.saveCoffee(coffeeStrength.value, timeIsNow)
-
-      // Create result
-      new DailyStats(1.0)
-    }
+                                          repository: CoffeeRepository) extends CoffeeService {
+  override def make(strength: CoffeeStrength) = {
+    val coffee = Coffee(UUID.randomUUID(), strength, coffeeSystem.now)
+    repository.save(coffee).flatMap(_ => top())
   }
+
+  override def get(id: UUID) = repository.get(id)
+  override def all() = repository.all()
+  override def top() = all().map(_.sortBy(-_.strength.value).take(3))
 }

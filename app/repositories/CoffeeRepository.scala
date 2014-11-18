@@ -1,12 +1,16 @@
 package repositories
 
-import org.joda.time.DateTime
+import java.util.UUID
+
+import model.Coffee
 import repositories.mongo.MongoCoffeeRepository
 
 import scala.util.Try
 
 trait CoffeeRepository {
-  def saveCoffee(strength: Int, timestamp: DateTime): Try[String]
+  def save(coffee: Coffee): Try[Unit]
+  def get(id: UUID): Try[Option[Coffee]]
+  def all(): Try[Seq[Coffee]]
 }
 
 object CoffeeRepository {
